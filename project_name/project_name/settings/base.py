@@ -1,6 +1,10 @@
 """Common settings and globals."""
 
 
+import dj_database_url
+import urlparse
+
+from os import environ
 from os.path import abspath, basename, dirname, join, normpath
 from sys import path
 
@@ -33,7 +37,7 @@ TEMPLATE_DEBUG = DEBUG
 ########## MANAGER CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = (
-    ('Your Name', 'your_email@example.com'),
+    ('John Watson', 'john@photodojo.org'),
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#managers
@@ -44,21 +48,31 @@ MANAGERS = ADMINS
 ########## DATABASE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    }
+        'default': dj_database_url.parse(environ.get('DATABASE_URL', 'postgres://localhost/{{ project_name }}')),
 }
 ########## END DATABASE CONFIGURATION
 
 
+########## CACHE CONFIGURATION
+# See: https://docs.djangoproject.com/en/dev/ref/settings/#caches
+redis_url = urlparse.urlparse(environ.get('REDISTOGO_URL', 'redis://localhost:6379'))
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': '%s:%s' % (redis_url.hostname, redis_url.port),
+        'OPTIONS': {
+            'DB': 0,
+            'PASSWORD': redis_url.password,
+        },
+    },
+}
+########## END CACHE CONFIGURATION
+
+
 ########## GENERAL CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#time-zone
-TIME_ZONE = 'America/Los_Angeles'
+TIME_ZONE = 'UTC'
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = 'en-us'
@@ -103,13 +117,16 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+
+# See: https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-STATICFILES_STORAGE
+STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
 ########## END STATIC FILE CONFIGURATION
 
 
 ########## SECRET CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 # Note: This key should only be used for development and testing.
-SECRET_KEY = r"{{ secret_key }}"
+SECRET_KEY = '{{ secret_key }}'
 ########## END SECRET CONFIGURATION
 
 
@@ -249,3 +266,51 @@ INSTALLED_APPS += (
 # Don't need to use South when setting up a test database.
 SOUTH_TESTS_MIGRATE = False
 ########## END SOUTH CONFIGURATION
+
+
+########## BCRYPT CONFIGURATION
+# See: https://github.com/dwaiter/django-bcrypt
+INSTALLED_APPS += (
+    'django_bcrypt',
+)
+
+# Number of rounds to use for bcrypt hashing. Increase this as computers get
+# faster.
+BCRYPT_ROUNDS=18
+########## END BCRYPT CONFIGURATION
+
+
+########## PIPELINE CONFIGURATION
+# See: http://django-pipeline.readthedocs.org/en/latest/
+INSTALLED_APPS += (
+    'pipeline',
+)
+
+# See: http://django-pipeline.readthedocs.org/en/latest/compilers.html#compilers
+PIPELINE_COMPILERS = (
+    'pipeline.compilers.sass.SASSCompiler',
+)
+
+# See: http://django-pipeline.readthedocs.org/en/latest/configuration.html#wrapped-javascript-output
+PIPELINE_DISABLE_WRAPPER = True
+
+# See: http://django-pipeline.readthedocs.org/en/latest/compilers.html#pipeline-sass-arguments
+PIPELINE_SASS_ARGUMENTS = '--quiet --update'
+
+# See: http://django-pipeline.readthedocs.org/en/latest/configuration.html#specifying-files
+PIPELINE_CSS = {
+    'application': {
+        'source_filenames': (
+            'application/stylesheets/applicatoin.scss',
+        ),
+        'output_filename': 'application.css',
+    },
+
+    'vendor': {
+        'source_filenames': (
+            'vendor/stylesheets/normalize-3.0.1.css',
+        ),
+        'output_filename': 'vendor.css',
+    },
+}
+########## END PIPELINE CONFIGURATION
