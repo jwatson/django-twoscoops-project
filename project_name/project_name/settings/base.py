@@ -48,7 +48,7 @@ MANAGERS = ADMINS
 ########## DATABASE CONFIGURATION
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {
-        'default': dj_database_url.parse(environ.get('DATABASE_URL', 'postgres://localhost/{{ project_name }}')),
+    'default': dj_database_url.parse(environ.get('DATABASE_URL', 'postgres://localhost/{{ project_name }}')),
 }
 ########## END DATABASE CONFIGURATION
 
@@ -276,7 +276,7 @@ INSTALLED_APPS += (
 
 # Number of rounds to use for bcrypt hashing. Increase this as computers get
 # faster.
-BCRYPT_ROUNDS=18
+BCRYPT_ROUNDS = 18
 ########## END BCRYPT CONFIGURATION
 
 
